@@ -1,0 +1,52 @@
+cabal-version: 2.2
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           accelerate-benchmarks
+version:        0.1.0.0
+synopsis:       Benchmarks for the Accelerate library
+description:    Please see the README on GitHub at <https://github.com/ebilkill/accelerate-benchmarks#readme>
+category:       Accelerate, Concurrency, Data, Parallelism
+homepage:       https://github.com/ebilkill/accelerate-benchmarks#readme
+bug-reports:    https://github.com/ebilkill/accelerate-benchmarks/issues
+author:         Bart Wijgers
+maintainer:     Bart Wijgers <bartwijgers@hotmail.com>
+copyright:      2021 The Accelerate Team
+license:        BSD-3-Clause
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/ebilkill/accelerate-benchmarks
+
+benchmark benchmark
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Common
+      DotProduct
+      Paths_accelerate_benchmarks
+  hs-source-dirs:
+      bench
+  ghc-options: -Wall -O2 -threaded
+  cc-options: -Ofast -Wall -march=native -ftree-vectorize -fvect-cost-model=unlimited
+  cxx-sources:
+      cbits/dotp.c
+  extra-libraries:
+      stdc++
+  build-depends:
+      accelerate ==1.3.*
+    , accelerate-llvm
+    , accelerate-llvm-native
+    , base >=4.7 && <5
+    , criterion
+    , deepseq
+    , formatting
+    , text
+    , vector
+  default-language: Haskell2010

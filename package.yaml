@@ -1,0 +1,59 @@
+name:               accelerate-benchmarks
+version:            0.1.0.0
+github:             "ebilkill/accelerate-benchmarks"
+license:            BSD3
+author:             "Bart Wijgers"
+maintainer:         "Bart Wijgers <bartwijgers@hotmail.com>"
+copyright:          "2021 The Accelerate Team"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+synopsis:           Benchmarks for the Accelerate library
+category:           Accelerate, Concurrency, Data, Parallelism
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:        Please see the README on GitHub at <https://github.com/ebilkill/accelerate-benchmarks#readme>
+
+dependencies:
+- base                          >= 4.7 && < 5
+- accelerate                    == 1.3.*
+- accelerate-llvm
+- accelerate-llvm-native
+- deepseq
+- criterion
+
+# I think these might be for some accelerate-related things?
+- formatting
+- text
+- vector
+
+benchmarks:
+  benchmark:
+    main:        Main.hs
+    source-dirs: bench
+    cxx-sources:
+      - cbits/dotp.c
+
+    ghc-options:
+      - -Wall
+      - -O2
+      - -threaded
+
+    cc-options:
+      -Ofast
+      -Wall
+      -march=native
+      -ftree-vectorize
+      -fvect-cost-model=unlimited
+
+    extra-libraries:
+        # Maybe not strictly necessary, but I don't think it can hurt?
+        stdc++
+
+# vim: nospell
+
