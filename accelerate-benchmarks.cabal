@@ -15,10 +15,10 @@ author:         Bart Wijgers
 maintainer:     Bart Wijgers <bartwijgers@hotmail.com>
 copyright:      2021 The Accelerate Team
 license:        BSD-3-Clause
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    CHANGELOG.md
 
 source-repository head
   type: git
