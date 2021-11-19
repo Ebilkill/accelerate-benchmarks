@@ -78,16 +78,17 @@ dotpBenches :: IO Benchmark
 dotpBenches =
   do
     bsc <- cBenches runs
-    bsa <- aBenches runs [1 {-, 2, 4, 8, 16, 32-}]
+    bsa <- aBenches runs [1, 2, 4, 8, 16, 32]
     return $ bgroup "dotp" [
           bgroup "Hand-written" bsc
         , bgroup "Accelerate"   bsa
       ]
   where
     runs = [
-        ("1 float",     1)
-      , ("1K floats",   1000)
-      , ("1M floats",   1000000)
+	-- Deactivate the tiniest benchmarks for now
+        {-("1 float",     1)
+      ,   ("1K floats",   1000)
+      , -}("1M floats",   1000000)
       , ("100M floats", 100000000)
       ]
 
