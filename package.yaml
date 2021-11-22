@@ -43,9 +43,18 @@ benchmarks:
       - -Wall
       - -O2
       - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
 
     cc-options:
-      -Ofast
+      -O3
+      -Wall
+      -march=native
+      -ftree-vectorize
+      -fvect-cost-model=unlimited
+
+    cxx-options:
+      -O3
       -Wall
       -march=native
       -ftree-vectorize
