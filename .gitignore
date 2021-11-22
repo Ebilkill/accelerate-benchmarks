@@ -1,3 +1,5 @@
 .stack-work/
 *.hi
 *.o
+
+accelerate-benchmarks.html
