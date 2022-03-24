@@ -30,6 +30,7 @@ benchmark benchmark
   other-modules:
       Common
       DotProduct
+      RadixSort
       Paths_accelerate_benchmarks
   hs-source-dirs:
       bench

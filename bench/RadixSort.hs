@@ -3,8 +3,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
-module DotProduct
-  ( dotpBenches
+module RadixSort
+  ( radixSortBenches
   )
 where
 
@@ -20,24 +20,48 @@ import Foreign.C.Types (CSize(..))
 import Foreign.ForeignPtr
 import Foreign.Ptr
 
-program :: Acc (Array (Z :. Int) Float) -> Acc (Array (Z :. Int) Float) -> Acc (Array Z Float)
-program xs ys = A.fold (+) 0 $ A.zipWith (*) xs ys
+radixSortStep :: Acc (Array DIM1 Int) -> Int -> Acc (Array DIM1 Int)
+radixSortStep xs b =
+  let
+    -- Apparently I can't just say (\x -> (x >> b) & 1)...
+    bits = A.map ((`A.mod` 2) . (`A.div` (2 P.^ b))) xs
+    bits_neg = A.map (1 A.-) bits
+    offs = A.fold (+) 0 bits_neg
+    idxs_unset = A.zipWith (*) bits_neg (A.scanl (+) 0 bits_neg)
+    idxs_set   = A.zipWith (*) bits (A.map (+ the offs) $ A.scanl (+) 0 bits)
+    idxs_all   = A.zipWith (+) idxs_set idxs_unset
+    --idxs_final = A.map (\x -> x - 1) idxs_all
+    new_xs = generate (shape xs) (const (-100))
+    res = scatter idxs_all new_xs xs
+  in
+    res
+
+radixSort :: Acc (Array DIM1 Int) -> Acc (Array DIM1 Int)
+radixSort xs =
+  P.foldl radixSortStep xs [0..31] -- [0..31]
 
 -- Use env function?
 -- But we don't really use IO here...
 aBench :: Native -> (String, Int) -> IO Benchmark
 aBench target (name, count) =
   do
-    return $ env (return (xs, ys, CPU.runNWith target program)) $ (\ ~(xs, ys, p) -> bench name $ whnf (p xs) ys)
+    return $ env (return (xs, CPU.runNWith target radixSort)) $ (\ ~(xs, p) -> bench name $ whnf p xs)
   where
-    xs, ys :: Array (Z :. Int) Float
+    xs :: Array (Z :. Int) Int
     xs = fromList (Z :. count) [0..]
-    ys = fromList (Z :. count) [1, 3..]
+
+aBenches :: [(String, Int)] -> [(Native, Int)] -> IO [Benchmark]
+aBenches xs = mapM fn
+  where
+    fn (t, n) =
+      do
+        bgroup (show n P.++ "-threads") <$> traverse (aBench t) xs
 
 newtype FPtr a = FPtr (ForeignPtr a)
 instance NFData a => NFData (FPtr a) where
   rnf (FPtr x) = seq x ()
 
+{-
 -- Originally, this benchmark used `newArray (take len' [0..])`. However, the
 -- time the initialization took was horrible using that. Therefore, the
 -- newArray calls have been replaced by mallocArray calls and calls to C
@@ -63,36 +87,23 @@ cBench (name, len') =
           dot xs' ys' len
   in  env e f
 
-aBenches :: [(String, Int)] -> [(Native, Int)] -> IO [Benchmark]
-aBenches xs = mapM fn
-  where
-    fn (t, n) =
-      do
-        bgroup (show n P.++ "-threads") <$> traverse (aBench t) xs
-
 cBenches :: [(String, Int)] -> [Benchmark]
 cBenches = fmap cBench
+-}
 
-dotpBenches :: [(Native, Int)] -> IO Benchmark
-dotpBenches threads =
+radixSortBenches :: [(Native, Int)] -> IO Benchmark
+radixSortBenches threads =
   do
-    let bsc = cBenches runs
     bsa <- aBenches runs threads
-    return $ bgroup "dotp" [
-          bgroup "Hand-written" bsc
-        , bgroup "Accelerate"   bsa
+    return $ bgroup "radix-sort" [
+          bgroup "Accelerate"   bsa
       ]
   where
     runs = [
         -- Deactivate the tiniest benchmarks for now
-        {-("1 float",     1)
-      ,   ("1K floats",   1000)
-      , -}("1M floats",   1000000)
-      --, ("100M floats", 100000000)
+        {-("1 int",     1)
+      ,   ("1K ints",   1000)
+      , -}("1M ints",   1000000)
+      --, ("100M ints", 100000000)
       ]
-
-
-foreign import ccall unsafe "dot" dot :: Ptr Float -> Ptr Float -> CSize -> IO Float
-foreign import ccall unsafe "init_array1" initArray1 :: CSize -> Ptr Float -> IO ()
-foreign import ccall unsafe "init_array2" initArray2 :: CSize -> Ptr Float -> IO ()
 
